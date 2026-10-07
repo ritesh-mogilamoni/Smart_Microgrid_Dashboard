@@ -15,6 +15,365 @@ interface Hardware3DViewerProps {
   latest: LatestState;
 }
 
+// =========================================================================
+// PROCEDURAL CANVAS TEXTURE GENERATORS (Realistic PCB & Component Artwork)
+// =========================================================================
+
+// 1. Engineering Workbench Surface Texture
+function createWorkbenchTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // Matte ESD / Engineering Laminate Base
+  ctx.fillStyle = '#0b1626';
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  // Subtle grid lines (10mm scale)
+  ctx.strokeStyle = '#152438';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 1024; i += 32) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, 1024);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(1024, i);
+    ctx.stroke();
+  }
+
+  // Heavy grid lines (50mm scale)
+  ctx.strokeStyle = '#1e334f';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 1024; i += 160) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, 1024);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(1024, i);
+    ctx.stroke();
+  }
+
+  // Acrylic breadboard / Prototype mounting tray in center
+  ctx.fillStyle = '#0e1d32';
+  ctx.roundRect?.(60, 120, 904, 784, 16);
+  ctx.fill();
+  ctx.strokeStyle = '#253e60';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Mounting holes pattern on tray
+  ctx.fillStyle = '#07101c';
+  for (let x = 100; x <= 924; x += 40) {
+    for (let y = 160; y <= 864; y += 40) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Technical silkscreen corner badge
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText('SMART MICROGRID TEST FIXTURE #01', 90, 155);
+
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  return texture;
+}
+
+// 2. Solar PV Monocrystalline Wafer Texture
+function createSolarPanelTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // Deep anti-reflective navy blue monocrystalline wafer
+  ctx.fillStyle = '#14274e';
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  // Individual solar cell divisions (2 columns x 4 rows = 8 cells)
+  const cellW = 490;
+  const cellH = 240;
+  const gap = 14;
+
+  for (let col = 0; col < 2; col++) {
+    for (let row = 0; row < 4; row++) {
+      const cx = 15 + col * (cellW + gap);
+      const cy = 15 + row * (cellH + gap);
+
+      // Chamfered monocrystalline cell corners
+      ctx.fillStyle = '#102244';
+      ctx.beginPath();
+      ctx.moveTo(cx + 20, cy);
+      ctx.lineTo(cx + cellW - 20, cy);
+      ctx.lineTo(cx + cellW, cy + 20);
+      ctx.lineTo(cx + cellW, cy + cellH - 20);
+      ctx.lineTo(cx + cellW - 20, cy + cellH);
+      ctx.lineTo(cx + 20, cy + cellH);
+      ctx.lineTo(cx, cy + cellH - 20);
+      ctx.lineTo(cx, cy + 20);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle silicon texture gradient
+      const grad = ctx.createLinearGradient(cx, cy, cx + cellW, cy + cellH);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.08)');
+      grad.addColorStop(1, 'rgba(3, 10, 25, 0.4)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Conductive silver finger grid (ultra-fine lines)
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.35)';
+      ctx.lineWidth = 1;
+      for (let y = cy + 12; y < cy + cellH - 10; y += 14) {
+        ctx.beginPath();
+        ctx.moveTo(cx + 8, y);
+        ctx.lineTo(cx + cellW - 8, y);
+        ctx.stroke();
+      }
+
+      // Vertical silver busbars (2 ribbons per cell)
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(cx + cellW * 0.33 - 3, cy + 4, 6, cellH - 8);
+      ctx.fillRect(cx + cellW * 0.67 - 3, cy + 4, 6, cellH - 8);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+// 3. ESP32 DevKit V1 Matte Black PCB Artwork Texture
+function createEsp32PcbTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // Matte Black Soldermask
+  ctx.fillStyle = '#0a0d14';
+  ctx.fillRect(0, 0, 512, 1024);
+
+  // Copper traces (dark golden lines)
+  ctx.strokeStyle = '#2d2212';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 20; i++) {
+    ctx.beginPath();
+    ctx.moveTo(80 + (i % 5) * 60, 400 + i * 20);
+    ctx.lineTo(120 + (i % 4) * 70, 500 + i * 20);
+    ctx.lineTo(40 + (i % 6) * 70, 700 + i * 15);
+    ctx.stroke();
+  }
+
+  // Crisp White Silkscreen Text
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 24px monospace';
+  ctx.fillText('ESP32 DEVKIT V1', 130, 440);
+  ctx.font = '14px monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('ESP-WROOM-32 CHIP', 160, 470);
+  ctx.fillText('Wi-Fi + BLUETOOTH', 165, 495);
+
+  // Pin Labels along Left Rail
+  const leftPins = ['3V3', 'GND', 'D15', 'D2', 'D4', 'RX2', 'TX2', 'D5', 'D18', 'D19', 'D21', 'RX0', 'TX0', 'D22', 'D23'];
+  ctx.font = 'bold 15px monospace';
+  ctx.fillStyle = '#f8fafc';
+  leftPins.forEach((pin, i) => {
+    const y = 200 + i * 52;
+    ctx.fillText(pin, 48, y);
+    // Gold solder pad circle
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.arc(24, y - 4, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0a0d14';
+    ctx.beginPath();
+    ctx.arc(24, y - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+  });
+
+  // Pin Labels along Right Rail
+  const rightPins = ['VIN', 'GND', 'D13', 'D12', 'D14', 'D27', 'D26', 'D25', 'D33', 'D32', 'D35', 'D34', 'VN', 'VP', 'EN'];
+  rightPins.forEach((pin, i) => {
+    const y = 200 + i * 52;
+    ctx.fillText(pin, 400, y);
+    // Gold solder pad circle
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.arc(488, y - 4, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0a0d14';
+    ctx.beginPath();
+    ctx.arc(488, y - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+  });
+
+  // Highlight key GPIO pins used in this project
+  ctx.fillStyle = '#38bdf8'; // I2C SDA
+  ctx.fillText('◄ SDA', 100, 720);
+  ctx.fillText('◄ SCL', 340, 512);
+  ctx.fillStyle = '#14b8a6'; // Relay
+  ctx.fillText('◄ RELAY', 315, 564);
+
+  // USB / Power section silkscreen
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(180, 890, 152, 90);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('USB UART', 205, 945);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+// 4. ESP-WROOM-32 Stamped Metal RF Shield Texture
+function createEspShieldTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  // Brushed aluminum/tin surface
+  ctx.fillStyle = '#d1d5db';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Subtle brushed metal streaks
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  for (let i = 0; i < 512; i += 4) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(512, i);
+    ctx.stroke();
+  }
+
+  // Stamped Dark Silkscreen Markings
+  ctx.fillStyle = '#1f2937';
+  ctx.font = 'bold 38px sans-serif';
+  ctx.fillText('ESPRESSIF', 140, 120);
+
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('ESP-WROOM-32', 125, 180);
+
+  ctx.font = '20px monospace';
+  ctx.fillText('FCC ID: 2AC7Z-ESPWROOM32', 100, 240);
+  ctx.fillText('IC: 21098-ESPWROOM32', 130, 280);
+  ctx.fillText('CE 0700   RoHS', 160, 330);
+
+  // Micro QR code placeholder
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(360, 360, 100, 100);
+  ctx.fillStyle = '#d1d5db';
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      if ((r + c) % 2 === 0) {
+        ctx.fillRect(365 + c * 18, 365 + r * 18, 16, 16);
+      }
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+// 5. INA219 Purple PCB Silkscreen Texture
+function createInaPcbTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  // Adafruit / standard purple soldermask
+  ctx.fillStyle = '#581c87';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // White silkscreen
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText('INA219', 180, 120);
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('Zerø-Drift Bi-dir', 130, 160);
+  ctx.fillText('I2C Power Monitor', 135, 195);
+
+  // Terminal silkscreen labels
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText('Vin+   Vin-', 150, 450);
+
+  // Header pin labels
+  const pins = ['VCC', 'GND', 'SCL', 'SDA'];
+  pins.forEach((p, i) => {
+    ctx.fillText(p, 60 + i * 110, 60);
+  });
+
+  // Resistor pad marking
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(170, 260, 172, 80);
+  ctx.fillText('R100 SHUNT', 178, 310);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+// 6. Songle 5V Blue Relay Cube Stamped Texture
+function createRelayCubeTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  // Songle Industrial Relay Blue
+  ctx.fillStyle = '#0284c7';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // White silkscreen printing
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 48px sans-serif';
+  ctx.fillText('SONGLE', 145, 100);
+
+  ctx.font = 'bold 34px monospace';
+  ctx.fillText('SRD-05VDC-SL-C', 105, 160);
+
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText('10A 250VAC   10A 125VAC', 75, 230);
+  ctx.fillText('10A 30VDC    10A 28VDC', 85, 280);
+
+  // Stamped circuit diagram symbol
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  // Coil symbol
+  ctx.arc(160, 380, 20, 0, Math.PI * 2);
+  ctx.stroke();
+  // Switch contacts
+  ctx.moveTo(300, 360);
+  ctx.lineTo(340, 360);
+  ctx.lineTo(380, 340); // open contact
+  ctx.stroke();
+
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('NO  COM  NC', 180, 460);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+// =========================================================================
+// MAIN 3D HARDWARE VIEWER COMPONENT
+// =========================================================================
+
 export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
@@ -25,286 +384,448 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
   const controlsRef = useRef<OrbitControls | null>(null);
   const lcdCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lcdTextureRef = useRef<THREE.CanvasTexture | null>(null);
-  const relayArmRef = useRef<THREE.Group | null>(null);
-  const relayLedRef = useRef<THREE.Mesh | null>(null);
-  const loadBulbRef = useRef<THREE.Mesh | null>(null);
-  const loadLightRef = useRef<THREE.PointLight | null>(null);
-  const loadWireRef = useRef<THREE.Mesh | null>(null);
 
-  const interactiveObjectsRef = useRef<{ [key: string]: THREE.Object3D }>({});
+  // Dynamic references
+  const filamentMeshRef = useRef<THREE.Mesh | null>(null);
+  const bulbLightRef = useRef<THREE.PointLight | null>(null);
+  const relayLedRef = useRef<THREE.Mesh | null>(null);
+  const relayArmRef = useRef<THREE.Group | null>(null);
+  const loadWireMeshRef = useRef<THREE.Mesh | null>(null);
+  const highlightedGroupRef = useRef<THREE.Group | null>(null);
+
+  const interactiveObjectsRef = useRef<{ [key: string]: THREE.Group }>({});
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const width = containerRef.current.clientWidth;
-    const height = 360; // Clean, slightly shorter height
+    const height = 370;
 
-    // 1. Scene setup
+    // 1. Scene Setup
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     scene.background = new THREE.Color(0x07111f);
 
-    // 2. Camera: Isometric view
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(0, 4.2, 6.8);
-    camera.lookAt(0, 0.2, 0);
+    // 2. Closer Isometric Camera (FOV 36)
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+    camera.position.set(0, 4.2, 6.4);
+    camera.lookAt(0, 0.25, 0);
 
-    // 3. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    // 3. Renderer with realistic ACES Tone Mapping & Shadows
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     rendererRef.current = renderer;
     containerRef.current.appendChild(renderer.domElement);
 
-    // 4. Controls
+    // 4. Orbit Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.target.set(0, 0.2, 0);
+    controls.target.set(0, 0.25, 0);
     controls.maxPolarAngle = Math.PI / 2.15;
-    controls.minDistance = 3.5;
-    controls.maxDistance = 12;
+    controls.minDistance = 3.2;
+    controls.maxDistance = 11;
     controlsRef.current = controls;
 
-    // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    // 5. Studio & Engineering Lab Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    keyLight.position.set(6, 12, 6);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    keyLight.position.set(5, 10, 5);
     keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.bias = -0.0005;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
-    fillLight.position.set(-6, 5, -4);
-    scene.add(fillLight);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    rimLight.position.set(-6, 6, -5);
+    scene.add(rimLight);
 
-    // 6. Workbench Surface
-    const benchGeo = new THREE.BoxGeometry(13.5, 0.3, 7.5);
+    const solarSun = new THREE.DirectionalLight(0xfff7ed, 0.8);
+    solarSun.position.set(-8, 9, 3);
+    scene.add(solarSun);
+
+    // 6. Workbench Surface with Custom Procedural ESD Grid Texture
+    const benchMatTexture = createWorkbenchTexture();
+    const benchGeo = new THREE.BoxGeometry(13.6, 0.25, 7.6);
     const benchMat = new THREE.MeshStandardMaterial({
-      color: 0x0f1c2e,
-      roughness: 0.5,
-      metalness: 0.2,
+      map: benchMatTexture,
+      roughness: 0.6,
+      metalness: 0.15,
     });
     const bench = new THREE.Mesh(benchGeo, benchMat);
-    bench.position.y = -0.15;
+    bench.position.y = -0.125;
     bench.receiveShadow = true;
     scene.add(bench);
 
-    const grid = new THREE.GridHelper(13, 22, 0x1e2e48, 0x142033);
-    grid.position.y = 0.01;
-    scene.add(grid);
+    // Common hardware materials
+    const mtlSolder = new THREE.MeshStandardMaterial({ color: 0xcfd8dc, metalness: 0.9, roughness: 0.2 });
+    const mtlBrass = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.3 });
+    const mtlBlackPlastic = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    const mtlTerminalGreen = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.45 });
 
-    const interactiveMap: { [key: string]: THREE.Object3D } = {};
+    // Helper: Add Brass Hex Standoffs under boards to lift them off the mat
+    const addHexStandoffs = (parent: THREE.Group, w: number, d: number) => {
+      const standoffGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.14, 6);
+      const screwGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.03, 12);
+      const halfW = w / 2 - 0.14;
+      const halfD = d / 2 - 0.14;
+      [
+        [-halfW, halfD],
+        [halfW, halfD],
+        [-halfW, -halfD],
+        [halfW, -halfD],
+      ].forEach(([cx, cz]) => {
+        const standoff = new THREE.Mesh(standoffGeo, mtlBrass);
+        standoff.position.set(cx, -0.07, cz);
+        const screw = new THREE.Mesh(screwGeo, mtlSolder);
+        screw.position.set(cx, 0.045, cz);
+        parent.add(standoff, screw);
+      });
+    };
 
-    // 1. SOLAR PV PANEL (Left)
+    const interactiveMap: { [key: string]: THREE.Group } = {};
+
+    // =========================================================================
+    // 1. SOLAR PV PANEL (6V, 3W) — Positioned at X = -4.3
+    // =========================================================================
     const solarGroup = new THREE.Group();
-    solarGroup.position.set(-4.2, 0.3, 0.2);
-    solarGroup.rotation.x = -Math.PI / 7;
+    solarGroup.position.set(-4.3, 0.38, 0.2);
+    solarGroup.rotation.x = -Math.PI / 7.5; // realistic 24-degree tilt
     solarGroup.name = 'solar_pv';
 
-    const sFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(2.4, 0.12, 3.4),
-      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
-    );
-    sFrame.castShadow = true;
-    solarGroup.add(sFrame);
+    // Extruded aluminum outer frame
+    const alFrameGeo = new THREE.BoxGeometry(2.5, 0.14, 3.5);
+    const alFrameMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.25 });
+    const alFrame = new THREE.Mesh(alFrameGeo, alFrameMat);
+    alFrame.castShadow = true;
+    solarGroup.add(alFrame);
 
-    const pvCells = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 0.05, 3.2),
-      new THREE.MeshStandardMaterial({ color: 0x172554, roughness: 0.2, metalness: 0.5 })
-    );
-    pvCells.position.y = 0.05;
-    solarGroup.add(pvCells);
+    // Monocrystalline Silicon Photovoltaic Cells with procedural busbars texture
+    const pvTexture = createSolarPanelTexture();
+    const cellGeo = new THREE.BoxGeometry(2.32, 0.04, 3.32);
+    const cellMat = new THREE.MeshStandardMaterial({
+      map: pvTexture,
+      roughness: 0.15,
+      metalness: 0.4,
+    });
+    const cellsMesh = new THREE.Mesh(cellGeo, cellMat);
+    cellsMesh.position.y = 0.06;
+    solarGroup.add(cellsMesh);
 
-    for (let x = -0.75; x <= 0.75; x += 0.5) {
-      const line = new THREE.Mesh(
-        new THREE.BoxGeometry(0.02, 0.02, 3.1),
-        new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
-      );
-      line.position.set(x, 0.08, 0);
-      solarGroup.add(line);
-    }
+    // Rear Junction Box & Heavy Output Glands
+    const jBox = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.25, 0.6), mtlBlackPlastic);
+    jBox.position.set(0, -0.15, 0);
+    solarGroup.add(jBox);
+
+    // Rear Aluminum Mounting Bracket / Kickstand
+    const standLegL = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.3), alFrameMat);
+    standLegL.position.set(-0.9, -0.4, -0.6);
+    standLegL.rotation.x = Math.PI / 4;
+    const standLegR = standLegL.clone();
+    standLegR.position.x = 0.9;
+    solarGroup.add(standLegL, standLegR);
+
     scene.add(solarGroup);
     interactiveMap['solar_pv'] = solarGroup;
 
-    // 2. INA219 SENSOR
+    // =========================================================================
+    // 2. INA219 CURRENT/VOLTAGE SENSOR BREAKOUT — Positioned at X = -2.1
+    // =========================================================================
     const inaGroup = new THREE.Group();
-    inaGroup.position.set(-2.0, 0.15, 0.4);
+    inaGroup.position.set(-2.1, 0.2, 0.4);
     inaGroup.name = 'ina219_sensor';
 
-    const inaPcb = new THREE.Mesh(
-      new THREE.BoxGeometry(1.4, 0.08, 1.8),
-      new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.5 })
-    );
+    const inaTexture = createInaPcbTexture();
+    const inaPcbGeo = new THREE.BoxGeometry(1.4, 0.08, 1.8);
+    const inaPcbMat = new THREE.MeshStandardMaterial({ map: inaTexture, roughness: 0.5 });
+    const inaPcb = new THREE.Mesh(inaPcbGeo, inaPcbMat);
     inaPcb.castShadow = true;
     inaGroup.add(inaPcb);
+    addHexStandoffs(inaGroup, 1.4, 1.8);
 
-    const inaTerm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.5, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.4 })
-    );
-    inaTerm.position.set(0, 0.26, 0.55);
+    // 2-Pin Green Screw Terminal Block (Load power path)
+    const inaTerm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.52, 0.55), mtlTerminalGreen);
+    inaTerm.position.set(0, 0.28, 0.55);
     inaGroup.add(inaTerm);
 
-    const shunt = new THREE.Mesh(
-      new THREE.BoxGeometry(0.35, 0.08, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.2 })
+    [-0.22, 0.22].forEach((sx) => {
+      const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 12), mtlSolder);
+      screw.position.set(sx, 0.55, 0.55);
+      inaGroup.add(screw);
+    });
+
+    // Precision Shunt Resistor (R100 alloy chip with solder fillets)
+    const shuntBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.38, 0.08, 0.22),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.3 })
     );
-    shunt.position.set(0, 0.08, -0.2);
-    inaGroup.add(shunt);
+    shuntBody.position.set(0, 0.08, -0.15);
+    inaGroup.add(shuntBody);
+
+    // SOT-23 / SOIC-8 INA219 IC Chip
+    const icChip = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.3), mtlBlackPlastic);
+    icChip.position.set(0, 0.07, 0.15);
+    inaGroup.add(icChip);
+
+    // 6-Pin DuPont Header Strip (VCC, GND, SCL, SDA, Vin-, Vin+)
+    const inaHeader = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.22, 0.16), mtlBlackPlastic);
+    inaHeader.position.set(0, 0.14, -0.75);
+    inaGroup.add(inaHeader);
+    for (let px = -0.45; px <= 0.45; px += 0.18) {
+      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.4, 0.03), mtlBrass);
+      pin.position.set(px, 0.24, -0.75);
+      inaGroup.add(pin);
+    }
 
     scene.add(inaGroup);
     interactiveMap['ina219_sensor'] = inaGroup;
 
-    // 3. ESP32 DevKit V1 (Center)
+    // =========================================================================
+    // 3. ESP32 DevKit V1 (Center) — Positioned at X = 0.0
+    // =========================================================================
     const espGroup = new THREE.Group();
-    espGroup.position.set(0, 0.2, 0.4);
+    espGroup.position.set(0.0, 0.2, 0.4);
     espGroup.name = 'esp32_devkit';
 
+    const espTexture = createEsp32PcbTexture();
     const espPcb = new THREE.Mesh(
-      new THREE.BoxGeometry(2.3, 0.08, 4.0),
-      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.7 })
+      new THREE.BoxGeometry(2.4, 0.08, 4.2),
+      new THREE.MeshStandardMaterial({ map: espTexture, roughness: 0.65 })
     );
     espPcb.castShadow = true;
     espGroup.add(espPcb);
+    addHexStandoffs(espGroup, 2.4, 4.2);
 
-    const rfShield = new THREE.Mesh(
-      new THREE.BoxGeometry(1.5, 0.16, 1.8),
-      new THREE.MeshStandardMaterial({ color: 0xcfd8dc, metalness: 0.9, roughness: 0.15 })
+    // Stamped Metal RF Shield (ESP-WROOM-32) with official markings texture
+    const shieldTexture = createEspShieldTexture();
+    const espShield = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 0.18, 1.9),
+      new THREE.MeshStandardMaterial({
+        map: shieldTexture,
+        metalness: 0.85,
+        roughness: 0.2,
+      })
     );
-    rfShield.position.set(0, 0.11, -0.7);
-    espGroup.add(rfShield);
+    espShield.position.set(0, 0.12, -0.65);
+    espShield.castShadow = true;
+    espGroup.add(espShield);
 
-    const antenna = new THREE.Mesh(
-      new THREE.BoxGeometry(1.4, 0.04, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.6, roughness: 0.3 })
+    // Gold/Copper PCB Meandered Trace Antenna at top notch
+    const antennaTrace = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 0.03, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.75, roughness: 0.25 })
     );
-    antenna.position.set(0, 0.05, -1.75);
-    espGroup.add(antenna);
+    antennaTrace.position.set(0, 0.05, -1.8);
+    espGroup.add(antennaTrace);
 
-    const headerMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
-    const hLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.35, 3.6), headerMat);
-    hLeft.position.set(-1.05, 0.18, 0);
-    const hRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.35, 3.6), headerMat);
-    hRight.position.set(1.05, 0.18, 0);
-    espGroup.add(hLeft, hRight);
+    // Micro-USB Port shell
+    const usbShell = new THREE.Mesh(
+      new THREE.BoxGeometry(0.8, 0.24, 0.55),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+    );
+    usbShell.position.set(0, 0.14, 2.05);
+    espGroup.add(usbShell);
 
-    const redLed = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-    redLed.position.set(0.5, 0.1, 1.4);
-    const blueLed = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
-    blueLed.position.set(-0.5, 0.1, 1.4);
-    espGroup.add(redLed, blueLed);
+    // AMS1117 3.3V Voltage Regulator with heat dissipation tab
+    const vReg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.1, 0.4), mtlBlackPlastic);
+    vReg.position.set(-0.6, 0.09, 1.1);
+    const vRegTab = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.15), mtlSolder);
+    vRegTab.position.set(-0.6, 0.06, 1.35);
+    espGroup.add(vReg, vRegTab);
+
+    // Tactile Reset & Boot buttons
+    [-0.65, 0.65].forEach((bx) => {
+      const btnBase = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, 0.25), mtlBlackPlastic);
+      btnBase.position.set(bx, 0.08, 1.85);
+      const btnCap = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 12), mtlSolder);
+      btnCap.position.set(bx, 0.15, 1.85);
+      espGroup.add(btnBase, btnCap);
+    });
+
+    // Dual 15-Pin Female Headers (Left and Right Rails)
+    const leftHeader = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.38, 3.8), mtlBlackPlastic);
+    leftHeader.position.set(-1.1, 0.2, 0);
+    const rightHeader = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.38, 3.8), mtlBlackPlastic);
+    rightHeader.position.set(1.1, 0.2, 0);
+    espGroup.add(leftHeader, rightHeader);
+
+    // Power & Wi-Fi SMD LEDs
+    const pwrLed = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.04, 0.07),
+      new THREE.MeshBasicMaterial({ color: 0xef4444 })
+    );
+    pwrLed.position.set(0.5, 0.06, 1.4);
+    const wifiLed = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.04, 0.07),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    wifiLed.position.set(-0.5, 0.06, 1.4);
+    espGroup.add(pwrLed, wifiLed);
 
     scene.add(espGroup);
     interactiveMap['esp32_devkit'] = espGroup;
 
-    // 4. 5V RELAY MODULE
+    // =========================================================================
+    // 4. 5V RELAY MODULE — Positioned at X = +2.3
+    // =========================================================================
     const relayGroup = new THREE.Group();
-    relayGroup.position.set(2.3, 0.16, 0.4);
+    relayGroup.position.set(2.3, 0.2, 0.4);
     relayGroup.name = 'relay_module';
 
     const rPcb = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 0.08, 2.8),
+      new THREE.BoxGeometry(1.9, 0.08, 2.9),
       new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.5 })
     );
     rPcb.castShadow = true;
     relayGroup.add(rPcb);
+    addHexStandoffs(relayGroup, 1.9, 2.9);
 
+    // Blue Songle mechanical relay cube with procedural stamped markings
+    const relayCubeTexture = createRelayCubeTexture();
     const rCube = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 0.9, 1.6),
-      new THREE.MeshStandardMaterial({ color: 0x0369a1, roughness: 0.3 })
+      new THREE.BoxGeometry(1.35, 0.95, 1.65),
+      new THREE.MeshStandardMaterial({
+        map: relayCubeTexture,
+        roughness: 0.35,
+      })
     );
-    rCube.position.set(0, 0.48, 0.15);
+    rCube.position.set(0, 0.5, 0.15);
     rCube.castShadow = true;
     relayGroup.add(rCube);
 
-    const rTerm = new THREE.Mesh(
-      new THREE.BoxGeometry(1.4, 0.5, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0x166534 })
-    );
-    rTerm.position.set(0, 0.28, 1.1);
+    // 3-Pin Green Screw Terminal Block (NO, COM, NC)
+    const rTerm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.52, 0.55), mtlTerminalGreen);
+    rTerm.position.set(0, 0.28, 1.15);
     relayGroup.add(rTerm);
 
-    const contactArmGroup = new THREE.Group();
-    contactArmGroup.position.set(0, 1.0, 0.15);
-    const contactBar = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.08, 0.6),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8 })
-    );
-    contactBar.position.z = 0.3;
-    contactArmGroup.add(contactBar);
-    relayGroup.add(contactArmGroup);
-    relayArmRef.current = contactArmGroup;
+    [-0.45, 0, 0.45].forEach((sx) => {
+      const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 12), mtlSolder);
+      screw.position.set(sx, 0.55, 1.15);
+      relayGroup.add(screw);
+    });
 
+    // Optocoupler IC (EL817) & Transistor Driver
+    const opto = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.35), mtlBlackPlastic);
+    opto.position.set(0.6, 0.08, -0.6);
+    relayGroup.add(opto);
+
+    // Mechanical Relay Contact Arm (Visibly opens when fault trips!)
+    const rArm = new THREE.Group();
+    rArm.position.set(0, 1.05, 0.15);
+    const rArmBar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.55), mtlBrass);
+    rArmBar.position.z = 0.28;
+    rArm.add(rArmBar);
+    relayGroup.add(rArm);
+    relayArmRef.current = rArm;
+
+    // Relay Action Indicator LED
     const rLed = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 12, 12),
-      new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x22c55e, emissiveIntensity: 1.2 })
+      new THREE.SphereGeometry(0.08, 14, 14),
+      new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x22c55e, emissiveIntensity: 1.3 })
     );
-    rLed.position.set(-0.55, 0.15, -0.9);
+    rLed.position.set(-0.6, 0.14, -0.95);
     relayGroup.add(rLed);
     relayLedRef.current = rLed;
 
     scene.add(relayGroup);
     interactiveMap['relay_module'] = relayGroup;
 
-    // 5. 5V DC LOAD
+    // =========================================================================
+    // 5. 5V DC LOAD (LAMP / BULB) — Positioned at X = +4.4
+    // =========================================================================
     const loadGroup = new THREE.Group();
-    loadGroup.position.set(4.3, 0.2, 0.4);
+    loadGroup.position.set(4.4, 0.2, 0.4);
     loadGroup.name = 'dc_load';
 
-    const socket = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.45, 0.55, 0.4, 16),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.3 })
+    // Industrial porcelain / brass fixture base
+    const fixtureBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.65, 0.4, 24),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6, roughness: 0.35 })
     );
-    socket.position.y = 0.2;
-    loadGroup.add(socket);
+    fixtureBase.position.y = 0.2;
+    fixtureBase.castShadow = true;
+    loadGroup.add(fixtureBase);
 
-    const bulb = new THREE.Mesh(
-      new THREE.SphereGeometry(0.55, 24, 24),
+    // Screw threaded collar
+    const collar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.36, 0.36, 0.2, 16),
+      new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.85, roughness: 0.3 })
+    );
+    collar.position.y = 0.48;
+    loadGroup.add(collar);
+
+    // Bulb glass envelope with physical transmission
+    const bulbGlass = new THREE.Mesh(
+      new THREE.SphereGeometry(0.58, 28, 28),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xfef08a,
+        transmission: 0.88,
+        opacity: 0.9,
+        transparent: true,
+        roughness: 0.08,
+        reflectivity: 0.8,
+      })
+    );
+    bulbGlass.position.y = 0.88;
+    loadGroup.add(bulbGlass);
+
+    // Tungsten Filament Coil
+    const filament = new THREE.Mesh(
+      new THREE.TorusGeometry(0.12, 0.03, 12, 24),
       new THREE.MeshStandardMaterial({
         color: 0xfef08a,
         emissive: 0xfef08a,
-        emissiveIntensity: 1.0,
-        roughness: 0.1,
-        transparent: true,
-        opacity: 0.85,
+        emissiveIntensity: 2.0,
       })
     );
-    bulb.position.y = 0.75;
-    loadGroup.add(bulb);
-    loadBulbRef.current = bulb;
+    filament.position.y = 0.88;
+    filament.rotation.x = Math.PI / 2;
+    loadGroup.add(filament);
+    filamentMeshRef.current = filament;
 
-    const loadLight = new THREE.PointLight(0xfef08a, 2.0, 5);
-    loadLight.position.set(4.3, 1.0, 0.4);
+    // Dynamic light emitted by load
+    const loadLight = new THREE.PointLight(0xfef08a, 2.2, 5.5);
+    loadLight.position.set(4.4, 1.1, 0.4);
     scene.add(loadLight);
-    loadLightRef.current = loadLight;
+    bulbLightRef.current = loadLight;
 
     scene.add(loadGroup);
     interactiveMap['dc_load'] = loadGroup;
 
-    // 6. 16x2 LCD DISPLAY (Top Center)
+    // =========================================================================
+    // 6. 16×2 CHARACTER LCD DISPLAY (HD44780) — Positioned at Top Center
+    // =========================================================================
     const lcdGroup = new THREE.Group();
-    lcdGroup.position.set(0, 0.4, -2.1);
+    lcdGroup.position.set(0.0, 0.42, -2.1);
     lcdGroup.rotation.x = -Math.PI / 10;
     lcdGroup.name = 'lcd_display';
 
+    // Green FR4 PCB
     const lcdPcb = new THREE.Mesh(
-      new THREE.BoxGeometry(4.6, 0.1, 2.2),
-      new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.6 })
+      new THREE.BoxGeometry(4.7, 0.09, 2.3),
+      new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.55 })
     );
     lcdPcb.castShadow = true;
     lcdGroup.add(lcdPcb);
+    addHexStandoffs(lcdGroup, 4.7, 2.3);
 
-    const bezel = new THREE.Mesh(
-      new THREE.BoxGeometry(4.0, 0.18, 1.6),
-      new THREE.MeshStandardMaterial({ color: 0x090d16, metalness: 0.4 })
+    // Black Metal Screen Bezel with retaining tabs
+    const lcdBezel = new THREE.Mesh(
+      new THREE.BoxGeometry(4.1, 0.18, 1.7),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, metalness: 0.6, roughness: 0.35 })
     );
-    bezel.position.y = 0.1;
-    lcdGroup.add(bezel);
+    lcdBezel.position.y = 0.1;
+    lcdGroup.add(lcdBezel);
 
+    // Dynamic 16x2 Text Canvas
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 160;
@@ -314,7 +835,7 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
     lcdTextureRef.current = lcdTexture;
 
     const screenMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.6, 1.3),
+      new THREE.PlaneGeometry(3.7, 1.35),
       new THREE.MeshBasicMaterial({ map: lcdTexture })
     );
     screenMesh.position.set(0, 0.2, 0);
@@ -326,50 +847,78 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
 
     interactiveObjectsRef.current = interactiveMap;
 
-    // 7. WIRING
-    const buildWire = (points: THREE.Vector3[], color: number) => {
-      const curve = new THREE.CatmullRomCurve3(points);
-      const tubeGeo = new THREE.TubeGeometry(curve, 24, 0.035, 8, false);
-      const tubeMat = new THREE.MeshStandardMaterial({ color, roughness: 0.4 });
-      return new THREE.Mesh(tubeGeo, tubeMat);
+    // =========================================================================
+    // 7. REALISTIC COLOR-CODED JUMPER WIRING WITH DUPONT CONNECTOR HOUSINGS
+    // =========================================================================
+    const createRoutedWireWithBoots = (pts: THREE.Vector3[], color: number) => {
+      const group = new THREE.Group();
+
+      // Catenary sag / gravity natural spline
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.034, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({ color, roughness: 0.38 });
+      const wireMesh = new THREE.Mesh(tubeGeo, tubeMat);
+      group.add(wireMesh);
+
+      // Black DuPont terminal boots at start and end
+      const bootGeo = new THREE.BoxGeometry(0.09, 0.24, 0.09);
+      const startBoot = new THREE.Mesh(bootGeo, mtlBlackPlastic);
+      startBoot.position.copy(pts[0]);
+      const endBoot = new THREE.Mesh(bootGeo, mtlBlackPlastic);
+      endBoot.position.copy(pts[pts.length - 1]);
+      group.add(startBoot, endBoot);
+
+      scene.add(group);
+      return wireMesh;
     };
 
-    scene.add(buildWire([
-      new THREE.Vector3(-3.1, 0.25, 0.1),
-      new THREE.Vector3(-2.7, 0.45, 0.3),
-      new THREE.Vector3(-2.1, 0.35, 0.45),
-    ], 0xef4444)); // Red
-    scene.add(buildWire([
-      new THREE.Vector3(-3.1, 0.25, -0.1),
-      new THREE.Vector3(-2.7, 0.4, 0.1),
-      new THREE.Vector3(-1.9, 0.35, 0.45),
-    ], 0x1e293b)); // Black
+    // Solar -> INA219 (Red VCC & Black GND)
+    createRoutedWireWithBoots([
+      new THREE.Vector3(-3.1, 0.28, 0.1),
+      new THREE.Vector3(-2.65, 0.35, 0.25),
+      new THREE.Vector3(-2.15, 0.32, 0.45),
+    ], 0xef4444);
 
-    scene.add(buildWire([
-      new THREE.Vector3(-1.5, 0.2, 0.4),
-      new THREE.Vector3(-1.1, 0.45, 0.3),
-      new THREE.Vector3(-0.8, 0.3, 0.2),
-    ], 0x38bdf8)); // Cyan SDA
+    createRoutedWireWithBoots([
+      new THREE.Vector3(-3.1, 0.28, -0.1),
+      new THREE.Vector3(-2.65, 0.3, 0.1),
+      new THREE.Vector3(-1.95, 0.32, 0.45),
+    ], 0x1e293b);
 
-    scene.add(buildWire([
-      new THREE.Vector3(0.8, 0.3, 0.3),
-      new THREE.Vector3(1.4, 0.5, 0.3),
-      new THREE.Vector3(1.9, 0.25, 0.3),
-    ], 0x14b8a6)); // Teal signal
+    // INA219 -> ESP32 I2C Bus (Cyan SDA GPIO 21 & Yellow SCL GPIO 22)
+    createRoutedWireWithBoots([
+      new THREE.Vector3(-1.5, 0.25, 0.4),
+      new THREE.Vector3(-1.05, 0.38, 0.3),
+      new THREE.Vector3(-0.8, 0.28, 0.2),
+    ], 0x38bdf8);
 
+    createRoutedWireWithBoots([
+      new THREE.Vector3(-1.5, 0.25, 0.2),
+      new THREE.Vector3(-1.05, 0.34, 0.1),
+      new THREE.Vector3(-0.8, 0.28, 0.4),
+    ], 0xf59e0b);
+
+    // ESP32 -> Relay Signal (Teal / GPIO 26)
+    createRoutedWireWithBoots([
+      new THREE.Vector3(0.8, 0.28, 0.3),
+      new THREE.Vector3(1.45, 0.42, 0.3),
+      new THREE.Vector3(1.95, 0.28, 0.3),
+    ], 0x14b8a6);
+
+    // Relay -> DC Load (Switched load wire)
     const loadWireCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(2.7, 0.3, 0.7),
-      new THREE.Vector3(3.5, 0.45, 0.5),
-      new THREE.Vector3(4.0, 0.28, 0.4),
+      new THREE.Vector3(3.55, 0.4, 0.5),
+      new THREE.Vector3(4.1, 0.28, 0.4),
     ]);
     const loadWireMesh = new THREE.Mesh(
-      new THREE.TubeGeometry(loadWireCurve, 24, 0.04, 8, false),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 })
+      new THREE.TubeGeometry(loadWireCurve, 28, 0.038, 8, false),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35 })
     );
     scene.add(loadWireMesh);
-    loadWireRef.current = loadWireMesh;
+    loadWireMeshRef.current = loadWireMesh;
 
-    // Raycast click
+    // Raycast Click Selection
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -400,6 +949,18 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
         }
 
         if (hitObj?.name) {
+          // Remove previous elevation highlight
+          if (highlightedGroupRef.current) {
+            highlightedGroupRef.current.position.y -= 0.08;
+          }
+
+          // Subtle elevation highlight
+          const targetGrp = interactiveObjectsRef.current[hitObj.name];
+          if (targetGrp) {
+            targetGrp.position.y += 0.08;
+            highlightedGroupRef.current = targetGrp;
+          }
+
           showComponentDetails(hitObj.name);
         }
       }
@@ -452,7 +1013,7 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
       case 'ina219_sensor':
         setActiveComponent({
           name: 'INA219 Power Monitor',
-          func: '12-bit digital sensor for bus voltage and shunt current.',
+          func: '12-bit digital sensor measuring bus voltage and shunt current over I2C.',
           conn: 'I2C Bus: SDA (GPIO 21), SCL (GPIO 22)',
           state: `V: ${latest.voltage.toFixed(2)} V | I: ${latest.current.toFixed(2)} A`,
         });
@@ -468,7 +1029,7 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
       case 'relay_module':
         setActiveComponent({
           name: '5V Load Isolation Relay',
-          func: 'Electromechanical switch isolating DC load upon abnormal state.',
+          func: 'Electromechanical switch isolating DC load upon abnormal condition.',
           conn: 'Signal: GPIO 26 | Load: COM & NC terminals',
           state: latest.relayState === 'CONNECTED' ? 'CLOSED (Normal Path)' : 'OPEN (Tripped / Isolated)',
         });
@@ -476,14 +1037,14 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
       case 'dc_load':
         setActiveComponent({
           name: '5V DC Load (LED Lamp)',
-          func: 'Electrical load receiving regulated solar power.',
+          func: 'Electrical load receiving regulated solar branch power.',
           conn: 'Connected through 5V Relay isolation contacts',
           state: latest.relayState === 'CONNECTED' ? 'Active (5V Powered)' : 'Isolated (0V Cutoff)',
         });
         break;
       case 'lcd_display':
         setActiveComponent({
-          name: '16×2 Character LCD',
+          name: '16×2 Character LCD (HD44780)',
           func: 'Local display for voltage, current, power, and state.',
           conn: 'I2C Backpack: GPIO 21 / GPIO 22',
           state: `V:${latest.voltage.toFixed(2)}V I:${latest.current.toFixed(2)}A`,
@@ -494,7 +1055,9 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
     }
   };
 
+  // Sync dynamic values with Live Telemetry State
   useEffect(() => {
+    // 1. Update 16x2 LCD Text
     if (lcdCanvasRef.current && lcdTextureRef.current) {
       const ctx = lcdCanvasRef.current.getContext('2d');
       if (ctx) {
@@ -512,45 +1075,51 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
 
     const isConnected = latest.relayState === 'CONNECTED';
 
+    // 2. Relay mechanical armature swing
     if (relayArmRef.current) {
       relayArmRef.current.rotation.x = isConnected ? 0 : -Math.PI / 4;
     }
 
+    // 3. Relay status LED
     if (relayLedRef.current) {
       const mat = relayLedRef.current.material as THREE.MeshStandardMaterial;
       mat.color.setHex(isConnected ? 0x22c55e : 0xef4444);
       mat.emissive.setHex(isConnected ? 0x22c55e : 0xef4444);
     }
 
-    if (loadBulbRef.current && loadLightRef.current) {
-      const bulbMat = loadBulbRef.current.material as THREE.MeshStandardMaterial;
+    // 4. DC Load Bulb Filament & Point Light
+    if (filamentMeshRef.current && bulbLightRef.current) {
+      const filMat = filamentMeshRef.current.material as THREE.MeshStandardMaterial;
       if (isConnected) {
-        bulbMat.color.setHex(0xfef08a);
-        bulbMat.emissive.setHex(0xfef08a);
-        loadLightRef.current.intensity = 2.0;
+        filMat.color.setHex(0xfef08a);
+        filMat.emissive.setHex(0xfef08a);
+        filMat.emissiveIntensity = 2.0;
+        bulbLightRef.current.intensity = 2.2;
       } else {
-        bulbMat.color.setHex(0x334155);
-        bulbMat.emissive.setHex(0x000000);
-        loadLightRef.current.intensity = 0;
+        filMat.color.setHex(0x334155);
+        filMat.emissive.setHex(0x000000);
+        filMat.emissiveIntensity = 0;
+        bulbLightRef.current.intensity = 0;
       }
     }
 
-    if (loadWireRef.current) {
-      const wireMat = loadWireRef.current.material as THREE.MeshStandardMaterial;
+    // 5. Load Switched Wire Color
+    if (loadWireMeshRef.current) {
+      const wireMat = loadWireMeshRef.current.material as THREE.MeshStandardMaterial;
       wireMat.color.setHex(isConnected ? 0xf59e0b : 0x1e293b);
     }
   }, [latest]);
 
   return (
     <div className="bg-[#111f33] border border-[#1e2e48] rounded-lg p-4 relative">
-      {/* Simplified Header */}
+      {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-[#1e2e48]">
         <div>
           <h2 className="text-sm font-semibold text-slate-200">
             Interactive Hardware Model
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Click any component to inspect pinout and live telemetry
+            Engineering prototype setup (PV ➔ INA219 ➔ ESP32 ➔ Relay ➔ Load)
           </p>
         </div>
 
@@ -569,7 +1138,7 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
 
           <div className="hidden sm:flex items-center gap-1 text-slate-400 text-[11px] bg-[#0a1424] px-2 py-1 rounded border border-[#1e2e48]">
             <ZoomIn className="w-3 h-3" />
-            <span>Click & Drag to Rotate</span>
+            <span>Click to Inspect • Drag to Rotate</span>
           </div>
         </div>
       </div>
@@ -578,16 +1147,22 @@ export const Hardware3DViewer: React.FC<Hardware3DViewerProps> = ({ latest }) =>
       <div className="relative mt-3">
         <div
           ref={containerRef}
-          className="w-full h-[360px] rounded cursor-grab active:cursor-grabbing bg-[#07111f] border border-[#1e2e48]"
+          className="w-full h-[370px] rounded cursor-grab active:cursor-grabbing bg-[#07111f] border border-[#1e2e48]"
         />
 
-        {/* Smaller, focused info popup */}
+        {/* Focused Component Inspection Popup */}
         {activeComponent && (
           <div className="absolute top-4 left-4 max-w-xs w-full bg-[#0a1424]/95 border border-[#1e2e48] rounded-lg p-3 shadow-xl backdrop-blur text-xs z-10 animate-in fade-in">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#1e2e48]">
               <span className="font-semibold text-[#38bdf8]">{activeComponent.name}</span>
               <button
-                onClick={() => setActiveComponent(null)}
+                onClick={() => {
+                  if (highlightedGroupRef.current) {
+                    highlightedGroupRef.current.position.y -= 0.08;
+                    highlightedGroupRef.current = null;
+                  }
+                  setActiveComponent(null);
+                }}
                 className="p-1 rounded hover:bg-[#1e2e48] text-slate-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />

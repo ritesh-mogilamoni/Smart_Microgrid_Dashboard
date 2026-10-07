@@ -18,7 +18,7 @@ import { Hardware3DViewer } from './components/Hardware3DViewer';
 import { TelemetryCharts } from './components/TelemetryCharts';
 import { FaultEventsLog } from './components/FaultEventsLog';
 import { DemoController } from './components/DemoController';
-import { Cpu, Database, Box, Layers, Activity } from 'lucide-react';
+import { Box, Layers } from 'lucide-react';
 
 export function App() {
   const [thresholds] = useState<SystemThresholds>(DEFAULT_THRESHOLDS);
@@ -139,36 +139,12 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#07111f] text-slate-100 flex flex-col font-sans">
-      {/* Compact Header */}
+      {/* Clean Minimal Header */}
       <header className="border-b border-[#1e2e48] bg-[#0c1728] sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          {/* Title & Badge */}
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-sm sm:text-base font-bold text-white tracking-tight m-0">
-              Renewable Energy Monitoring & Fault Detection
-            </h1>
-            <span className="text-[10px] bg-[#111f33] text-[#38bdf8] border border-[#1e2e48] px-2 py-0.5 rounded font-mono font-medium">
-              SCADA
-            </span>
-          </div>
-
-          {/* 3 Small Status Indicators */}
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#111f33] border border-[#1e2e48] text-[#f59e0b]">
-              <Activity className="w-3 h-3" />
-              <span>Simulation Mode</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#111f33] border border-[#1e2e48] text-[#38bdf8]">
-              <Cpu className="w-3 h-3" />
-              <span>Virtual ESP32</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#111f33] border border-[#1e2e48] text-[#14b8a6]">
-              <Database className="w-3 h-3" />
-              <span>Firebase Connected</span>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-tight m-0">
+            Renewable Energy Monitoring & Fault Detection
+          </h1>
         </div>
       </header>
 
@@ -239,7 +215,7 @@ export function App() {
 
       {/* Small Clean Footer */}
       <footer className="border-t border-[#1e2e48] bg-[#0c1728] py-3 text-xs text-slate-400 text-center font-sans">
-        <span>INA219 • ESP32 DevKit V1 • Firebase RTDB • Anurag University</span>
+        <span>INA219 • ESP32 DevKit V1 • Firebase RTDB</span>
       </footer>
     </div>
   );
