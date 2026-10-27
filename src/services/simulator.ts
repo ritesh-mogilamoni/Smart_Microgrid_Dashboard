@@ -1,4 +1,6 @@
 import type { HistoryRecord, FaultEvent, SystemThresholds, SimulationMode, FaultStatus, RelayState } from '../types/microgrid';
+import { USE_FIREBASE, getFirebaseDB, latestRef, historyRef, eventsRef, set, push } from './firebase';
+import type { LatestState } from '../types/microgrid';
 
 export const DEFAULT_THRESHOLDS: SystemThresholds = {
   vmin: 4.50, // Vmin in Volts
@@ -124,4 +126,53 @@ export function computeNextReading(
   }
 
   return { voltage, current, power, faultStatus, relayState, reason };
+}
+
+// ─── Firebase Write Helpers ────────────────────────────────────────────────────
+// These are fire-and-forget. They are complete no-ops when USE_FIREBASE = false,
+// so the simulation is 100% unaffected until you flip the flag.
+
+/**
+ * Overwrites /latest/ with the most recent sensor reading.
+ * Called every second from App.tsx's interval loop.
+ */
+export async function writeLatestToFirebase(state: LatestState): Promise<void> {
+  if (!USE_FIREBASE) return;
+  const db = getFirebaseDB();
+  if (!db) return;
+  try {
+    await set(latestRef(db), state);
+  } catch (err) {
+    console.warn('[Firebase] writeLatest failed:', err);
+  }
+}
+
+/**
+ * Pushes a new record to /history/ (append-only time series).
+ * Called every 5 seconds or on fault transitions from App.tsx.
+ */
+export async function writeHistoryToFirebase(record: HistoryRecord): Promise<void> {
+  if (!USE_FIREBASE) return;
+  const db = getFirebaseDB();
+  if (!db) return;
+  try {
+    await push(historyRef(db), record);
+  } catch (err) {
+    console.warn('[Firebase] writeHistory failed:', err);
+  }
+}
+
+/**
+ * Pushes a new fault event to /events/ (audit log).
+ * Called only when fault state transitions occur.
+ */
+export async function writeEventToFirebase(event: FaultEvent): Promise<void> {
+  if (!USE_FIREBASE) return;
+  const db = getFirebaseDB();
+  if (!db) return;
+  try {
+    await push(eventsRef(db), event);
+  } catch (err) {
+    console.warn('[Firebase] writeEvent failed:', err);
+  }
 }

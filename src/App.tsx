@@ -11,7 +11,16 @@ import {
   generateInitialHistory,
   generateInitialEvents,
   computeNextReading,
+  writeLatestToFirebase,
+  writeHistoryToFirebase,
+  writeEventToFirebase,
 } from './services/simulator';
+import {
+  USE_FIREBASE,
+  getFirebaseDB,
+  latestRef,
+  onValue,
+} from './services/firebase';
 import { KPICards } from './components/KPICards';
 import { EdgeHardwarePreview } from './components/EdgeHardwarePreview';
 import { Hardware3DViewer } from './components/Hardware3DViewer';
@@ -72,6 +81,8 @@ export function App() {
       };
 
       setLatest(updatedLatest);
+      // Write latest reading to Firebase (no-op when USE_FIREBASE = false)
+      writeLatestToFirebase(updatedLatest);
 
       // Fault transition -> Instant event log
       if (reading.faultStatus !== prevFaultStatusRef.current) {
@@ -87,6 +98,8 @@ export function App() {
         };
 
         setEvents((prev) => [newEvent, ...prev.slice(0, 19)]);
+        // Write fault event + history snapshot to Firebase
+        writeEventToFirebase(newEvent);
         prevFaultStatusRef.current = reading.faultStatus;
 
         const histItem: HistoryRecord = {
@@ -100,6 +113,7 @@ export function App() {
           relayState: reading.relayState,
         };
         setHistory((prev) => [...prev.slice(-24), histItem]);
+        writeHistoryToFirebase(histItem);
       } else if (secondsCounterRef.current % 5 === 0) {
         // Standard 5-second history cycle
         const histItem: HistoryRecord = {
@@ -113,11 +127,40 @@ export function App() {
           relayState: reading.relayState,
         };
         setHistory((prev) => [...prev.slice(-24), histItem]);
+        writeHistoryToFirebase(histItem);
       }
     }, 1000);
 
     return () => clearInterval(interval);
   }, [isRunning, simulationMode, thresholds]);
+
+  // ─── Firebase Live Listener ────────────────────────────────────────────────
+  // When USE_FIREBASE = true, this overrides local simulator state with live
+  // data from Firebase RTDB (/latest/ node). This is how real ESP32 data
+  // will flow into the dashboard — no other code changes needed.
+  // When USE_FIREBASE = false, this effect does nothing at all.
+  useEffect(() => {
+    if (!USE_FIREBASE) return;
+    const db = getFirebaseDB();
+    if (!db) return;
+
+    const unsubscribe = onValue(latestRef(db), (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+      // Validate required fields before updating state
+      if (
+        typeof data.voltage === 'number' &&
+        typeof data.current === 'number' &&
+        typeof data.power   === 'number' &&
+        data.faultStatus && data.relayState
+      ) {
+        setLatest(data as LatestState);
+      }
+    });
+
+    // Detach listener on unmount
+    return () => unsubscribe();
+  }, []); // Only runs once on mount
 
   const handleReset = () => {
     setSimulationMode('AUTO_NORMAL');
