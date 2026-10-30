@@ -1,7 +1,7 @@
 // ─── FEATURE FLAG ─────────────────────────────────────────────────────────────
 // Set to true once you have real Firebase credentials in .env.local.
 // When false, Firebase is NEVER initialized — zero network traffic, pure simulation.
-export const USE_FIREBASE = false;
+export const USE_FIREBASE = true;
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { initializeApp } from 'firebase/app';
